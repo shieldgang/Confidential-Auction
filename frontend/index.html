@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confidential NFT Auction - ZAMA FHE</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a1a;
+            color: #ffffff;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: #2d2d2d;
+            border: 2px solid #00ff88;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 255, 136, 0.3);
+        }
+
+        .header h1 {
+            color: #00ff88;
+            font-size: 2.2em;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #ccc;
+            font-size: 1.1em;
+        }
+
+        .wallet-section {
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .wallet-info {
+            background: rgba(0, 255, 136, 0.1);
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #00ff88;
+        }
+
+        .btn {
+            background: #00ff88;
+            color: #1a1a1a;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: #00cc6a;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 136, 0.4);
+        }
+
+        .btn:disabled {
+            background: #666;
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        .panel {
+            background: #2d2d2d;
+            border: 1px solid #444;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .panel h2 {
+            color: #00ff88;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #ffffff;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #555;
+            border-radius: 6px;
+            background: #1a1a1a;
+            color: #ffffff;
+            font-size: 14px;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #00ff88;
+            box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.2);
+        }
+
+        .auction-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .auction-card {
+            background: #2d2d2d;
+            border: 1px solid #444;
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .auction-card:hover {
+            border-color: #00ff88;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 136, 0.2);
+        }
+
+        .auction-card h3 {
+            color: #00ff88;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .auction-info span {
+            display: block;
+            margin-bottom: 8px;
+            color: #ccc;
+        }
+
+        .bid-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .bid-form input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #555;
+            border-radius: 6px;
+            background: #1a1a1a;
+            color: #ffffff;
+        }
+
+        .status-active {
+            color: #00ff88;
+            font-weight: bold;
+        }
+
+        .status-expired {
+            color: #ffaa00;
+            font-weight: bold;
+        }
+
+        .status-ended {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #2d2d2d;
+            color: #ffffff;
+            padding: 15px 20px;
+            border-radius: 8px;
+            border-left: 4px solid #00ff88;
+            max-width: 350px;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.error {
+            border-left-color: #ff6b6b;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            background: #2d2d2d;
+            border: 2px dashed #555;
+            border-radius: 10px;
+            color: #ccc;
+        }
+
+        .countdown-timer {
+            color: #ffaa00;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+        }
+
+        .countdown-timer.expired {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            background: #444;
+            border: none;
+            border-radius: 6px;
+            color: #ccc;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: #00ff88;
+            color: #1a1a1a;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .wallet-section {
+                flex-direction: column;
+            }
+            
+            .auction-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🔐 Confidential NFT Auction</h1>
+            <p class="subtitle">Powered by ZAMA FHEVM - Fully Homomorphic Encryption</p>
+            <div class="wallet-section">
+                <div class="wallet-info">
+                    <span id="walletAddress">Not Connected</span>
+                </div>
+                <button class="btn" id="connectBtn">Connect Wallet</button>
+            </div>
+        </header>
+
+        <!-- Create Auction Panel -->
+        <div class="panel">
+            <h2>Create Auction</h2>
+            <form id="createAuctionForm">
+                <div class="form-group">
+                    <label>NFT Contract Address</label>
+                    <input type="text" id="nftContract" placeholder="0x..." required>
+                </div>
+                <div class="form-group">
+                    <label>Token ID</label>
+                    <input type="number" id="tokenId" placeholder="Enter token ID" required>
+                </div>
+                <div class="form-group">
+                    <label>Duration (minutes)</label>
+                    <input type="number" id="duration" value="5" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label>Reserve Price (ETH)</label>
+                    <input type="number" id="reservePrice" placeholder="0.1" step="0.01" required>
+                </div>
+                <button type="button" id="mintBtn" class="btn">Mint Test NFT</button>
+                <button type="button" id="approveBtn" class="btn">Approve NFT</button>
+                <button type="submit" class="btn">Create Auction</button>
+            </form>
+        </div>
+
+        <!-- Dashboard -->
+        <div class="panel">
+            <h2>Dashboard</h2>
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('owned')">My Auctions</button>
+                <button class="tab" onclick="switchTab('available')">Available Auctions</button>
+                <button class="tab" onclick="switchTab('bids')">My Bids</button>
+            </div>
+            
+            <div id="ownedTab" class="tab-content active">
+                <div id="ownedAuctions" class="auction-grid">
+                    <div class="empty-state">
+                        <p>No auctions created yet</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="availableTab" class="tab-content">
+                <div id="availableAuctions" class="auction-grid">
+                    <div class="empty-state">
+                        <p>No available auctions</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="bidsTab" class="tab-content">
+                <div id="userBids" class="auction-grid">
+                    <div class="empty-state">
+                        <p>No bids placed yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script src="https://unpkg.com/fhevmjs@0.6.0/bundle/fhevm.web.js"></script>
+    <script>
+        // Network Configuration
+        const CONFIG = {
+            SEPOLIA: {
+                chainId: 11155111,
+                name: "Sepolia",
+                rpcUrl: "https://ethereum-sepolia.publicnode.com"
+            }
+        };
+
+        // Contract ABIs
+        const AUCTION_ABI = [
+            "function createAuction(address nftContract, uint256 tokenId, uint256 duration, uint64 reservePrice) returns (uint256)",
+            "function placeBid(uint256 auctionId, bytes32 encryptedBid, bytes inputProof) payable",
+            "function endAuction(uint256 auctionId)",
+            "function revealWinner(uint256 auctionId)",
+            "function claimNFT(uint256 auctionId)",
+            "function claimRefund(uint256 auctionId)",
+            "function claimSellerPayment(uint256 auctionId)",
+            "function auctionCounter() view returns (uint256)",
+            "function getAuctionInfo(uint256 auctionId) view returns (address, address, uint256, uint256, bool, uint256, address, uint256)",
+            "function getUserBidAmount(uint256 auctionId, address user) view returns (uint256)",
+            "function hasUserBid(uint256 auctionId, address user) view returns (bool)",
+            "function hasUserRefunded(uint256 auctionId, address user) view returns (bool)",
+            "function hasSellerPaid(uint256 auctionId) view returns (bool)",
+            "event AuctionCreated(uint256 indexed auctionId, address indexed seller, address nftContract, uint256 tokenId, uint256 endTime)",
+            "event BidPlaced(uint256 indexed auctionId, address indexed bidder)"
+        ];
+
+        const NFT_ABI = [
+            "function publicMint(address to) returns (uint256)",
+            "function approve(address to, uint256 tokenId)",
+            "function ownerOf(uint256 tokenId) view returns (address)",
+            "function totalSupply() view returns (uint256)"
+        ];
+
+        // Global variables
+        let provider, signer, auctionContract, nftContract;
+        let currentAccount = null;
+        let contractAddresses = {};
+        // Cache for refund status to avoid duplicate calls
+        const refundStatusCache = new Map();
+        
+        // Check if user has successfully claimed refund by looking at transactions
+        async function checkRefundTransaction(auctionId, userAddress) {
+            const cacheKey = `${auctionId}-${userAddress}`;
+            if (refundStatusCache.has(cacheKey)) {
+                return refundStatusCache.get(cacheKey);
+            }
+            
+            try {
+                // Try to call claimRefund in a read-only way to see if it would fail
+                const tempContract = new ethers.Contract(contractAddresses.auction, AUCTION_ABI, provider);
+                await tempContract.callStatic.claimRefund(auctionId, {from: userAddress});
+                // If we reach here, refund hasn't been claimed yet
+                refundStatusCache.set(cacheKey, false);
+                return false;
+            } catch (error) {
+                // If error contains "Already refunded", then it was claimed
+                const hasRefunded = error.reason === "Already refunded" || 
+                                   (error.message && error.message.includes("Already refunded"));
+                refundStatusCache.set(cacheKey, hasRefunded);
+                return hasRefunded;
+            }
+        }
+        
+        // Check actual blockchain claim status
+        async function checkClaimStatus(auctionId) {
+            if (!auctionContract || !nftContract) return {};
+            
+            try {
+                const auctionInfo = await auctionContract.getAuctionInfo(auctionId);
+                const [seller, nftContractAddr, tokenId, endTime, ended, bidderCount, winner, winningBid] = auctionInfo;
+                
+                // Check NFT ownership to see if it's been claimed
+                let nftClaimed = false;
+                try {
+                    const nftOwner = await nftContract.ownerOf(tokenId);
+                    nftClaimed = nftOwner.toLowerCase() !== auctionContract.address.toLowerCase();
+                } catch (error) {
+                    // NFT might not exist or other error
+                    nftClaimed = false;
+                }
+                
+                return {
+                    nftClaimed,
+                    // We'll determine refund/payment status from transaction history
+                    winner: winner.toLowerCase(),
+                    ended,
+                    seller: seller.toLowerCase()
+                };
+            } catch (error) {
+                console.error(`Error checking claim status for auction ${auctionId}:`, error);
+                return {};
+            }
+        }
+        let countdownIntervals = new Map(); // Track countdown timers
+
+        // Utility functions
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName + 'Tab').classList.add('active');
+
+            // Load content for the active tab
+            if (currentAccount) {
+                if (tabName === 'bids') {
+                    // Force display user bids when switching to bids tab
+                    // Switching to bids tab
+                    displayUserBids();
+                } else {
+                    loadAuctions();
+                }
+            }
+        }
+
+        // Wallet connection
+        async function connectWallet() {
+            if (!window.ethereum) {
+                showToast('Please install MetaMask', 'error');
+                return;
+            }
+
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                const newAccount = accounts[0];
+                
+                // Clear cache if account changed
+                if (currentAccount !== newAccount) {
+                    refundStatusCache.clear();
+                }
+                currentAccount = newAccount;
+                
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                signer = provider.getSigner();
+                
+                // Load contract addresses
+                await loadContractAddresses();
+                
+                // Initialize contracts
+                if (contractAddresses.auction && contractAddresses.nft) {
+                    auctionContract = new ethers.Contract(contractAddresses.auction, AUCTION_ABI, signer);
+                    nftContract = new ethers.Contract(contractAddresses.nft, NFT_ABI, signer);
+                    
+                    document.getElementById('nftContract').value = contractAddresses.nft;
+                }
+
+                // No need to load claimed items - we'll check blockchain state
+
+                // Update UI
+                document.getElementById('walletAddress').textContent = 
+                    currentAccount.slice(0, 6) + '...' + currentAccount.slice(-4);
+                document.getElementById('connectBtn').textContent = 'Disconnect';
+                document.getElementById('connectBtn').onclick = disconnectWallet;
+
+                showToast('Wallet connected!');
+                loadAuctions();
+                
+            } catch (error) {
+                showToast('Failed to connect wallet: ' + error.message, 'error');
+            }
+        }
+
+        function disconnectWallet() {
+            currentAccount = null;
+            provider = null;
+            signer = null;
+            auctionContract = null;
+            nftContract = null;
+            
+            // Clear caches
+            refundStatusCache.clear();
+
+            document.getElementById('walletAddress').textContent = 'Not Connected';
+            document.getElementById('connectBtn').textContent = 'Connect Wallet';
+            document.getElementById('connectBtn').onclick = connectWallet;
+
+            showToast('Wallet disconnected');
+        }
+
+        // Load contract addresses (from deployment or manual input)
+        async function loadContractAddresses() {
+            try {
+                const response = await fetch('./deployment.json');
+                if (response.ok) {
+                    const deployment = await response.json();
+                    contractAddresses = deployment;
+                } else {
+                    // Fallback to manual input
+                    const auction = prompt('Enter Auction Contract Address:');
+                    const nft = prompt('Enter NFT Contract Address:');
+                    if (auction && nft) {
+                        contractAddresses = { auction, nft };
+                    }
+                }
+            } catch (error) {
+                console.log('No deployment file found, contracts will need to be entered manually');
+            }
+        }
+
+        // NFT Functions
+        async function mintNFT() {
+            if (!nftContract || !currentAccount) {
+                showToast('Please connect wallet and deploy contracts first', 'error');
+                return;
+            }
+
+            try {
+                showToast('Minting NFT...');
+                const tx = await nftContract.publicMint(currentAccount);
+                const receipt = await tx.wait();
+                
+                // Get token ID from totalSupply
+                const totalSupply = await nftContract.totalSupply();
+                const tokenId = totalSupply.toNumber() - 1;
+                
+                document.getElementById('tokenId').value = tokenId;
+                showToast(`NFT minted! Token ID: ${tokenId}`);
+                
+            } catch (error) {
+                showToast('Failed to mint NFT: ' + error.message, 'error');
+            }
+        }
+
+        async function approveNFT() {
+            if (!nftContract || !auctionContract) {
+                showToast('Please connect wallet first', 'error');
+                return;
+            }
+
+            const tokenId = document.getElementById('tokenId').value;
+            if (!tokenId) {
+                showToast('Please enter a token ID', 'error');
+                return;
+            }
+
+            try {
+                showToast('Approving NFT...');
+                const tx = await nftContract.approve(auctionContract.address, tokenId);
+                await tx.wait();
+                showToast('NFT approved for auction!');
+                
+            } catch (error) {
+                showToast('Failed to approve NFT: ' + error.message, 'error');
+            }
+        }
+
+        // Auction Functions
+        async function createAuction(e) {
+            e.preventDefault();
+            
+            if (!auctionContract || !currentAccount) {
+                showToast('Please connect wallet first', 'error');
+                return;
+            }
+
+            try {
+                const nftAddress = document.getElementById('nftContract').value;
+                const tokenId = parseInt(document.getElementById('tokenId').value);
+                const duration = parseInt(document.getElementById('duration').value) * 60;
+                const reservePrice = Math.floor(parseFloat(document.getElementById('reservePrice').value) * 1e6);
+
+                showToast('Creating auction...');
+                
+                const tx = await auctionContract.createAuction(
+                    nftAddress,
+                    tokenId,
+                    duration,
+                    reservePrice
+                );
+                
+                await tx.wait();
+                showToast('Auction created successfully!');
+                document.getElementById('createAuctionForm').reset();
+                document.getElementById('nftContract').value = contractAddresses.nft;
+                
+                setTimeout(() => loadAuctions(), 2000);
+                
+            } catch (error) {
+                showToast('Failed to create auction: ' + error.message, 'error');
+            }
+        }
+
+        async function placeBid(auctionId) {
+            const bidAmount = document.getElementById(`bidAmount${auctionId}`).value;
+            if (!bidAmount || parseFloat(bidAmount) <= 0) {
+                showToast('Please enter a valid bid amount', 'error');
+                return;
+            }
+
+            try {
+                showToast('Placing encrypted bid...');
+                
+                // Simple encryption for demonstration
+                const encryptedBid = ethers.utils.solidityKeccak256(["uint256"], [Math.floor(parseFloat(bidAmount) * 1e6)]);
+                const inputProof = "0x" + "00".repeat(100);
+                
+                const tx = await auctionContract.placeBid(
+                    auctionId,
+                    encryptedBid,
+                    inputProof,
+                    { value: ethers.utils.parseEther(bidAmount) }
+                );
+                
+                await tx.wait();
+                
+                showToast(`Bid placed: ${bidAmount} ETH`);
+                document.getElementById(`bidAmount${auctionId}`).value = '';
+                
+                // Async update without page reload
+                loadAuctions();
+                
+            } catch (error) {
+                showToast('Failed to place bid: ' + error.message, 'error');
+            }
+        }
+
+        async function endAuction(auctionId) {
+            try {
+                showToast('Ending auction...');
+                const tx = await auctionContract.endAuction(auctionId);
+                await tx.wait();
+                showToast('Auction ended!');
+                loadAuctions();
+                
+            } catch (error) {
+                showToast('Failed to end auction: ' + error.message, 'error');
+            }
+        }
+
+        async function revealWinner(auctionId) {
+            try {
+                showToast('Revealing winner...');
+                const tx = await auctionContract.revealWinner(auctionId);
+                await tx.wait();
+                showToast('Winner revealed!');
+                loadAuctions();
+                
+            } catch (error) {
+                showToast('Failed to reveal winner: ' + error.message, 'error');
+            }
+        }
+
+        // Claim Functions with state tracking
+        async function claimNFT(auctionId) {
+            try {
+                showToast('Claiming NFT...');
+                const tx = await auctionContract.claimNFT(auctionId);
+                await tx.wait();
+                
+                showToast('NFT claimed!');
+                loadAuctions();
+                
+            } catch (error) {
+                showToast('Failed to claim NFT: ' + error.message, 'error');
+            }
+        }
+
+        async function claimRefund(auctionId) {
+            try {
+                showToast('Claiming refund...');
+                const tx = await auctionContract.claimRefund(auctionId);
+                await tx.wait();
+                
+                showToast('Refund claimed!');
+                loadAuctions();
+                
+            } catch (error) {
+                showToast('Failed to claim refund: ' + error.message, 'error');
+            }
+        }
+
+        async function claimPayment(auctionId) {
+            try {
+                showToast('Claiming payment...');
+                const tx = await auctionContract.claimSellerPayment(auctionId);
+                await tx.wait();
+                
+                showToast('Payment claimed!');
+                loadAuctions();
+                
+            } catch (error) {
+                showToast('Failed to claim payment: ' + error.message, 'error');
+            }
+        }
+
+        // Add countdown timer functionality
+        function startCountdown(timerIdOrAuctionId, endTime, onExpired = null) {
+            // Support both old format (auctionId) and new format (custom timer ID)
+            const timerId = timerIdOrAuctionId.toString();
+            const elementId = timerId.includes('-') ? timerId : `timer-${timerId}`;
+            
+            // Clear existing countdown
+            if (countdownIntervals.has(elementId)) {
+                clearInterval(countdownIntervals.get(elementId));
+            }
+
+            const interval = setInterval(() => {
+                const now = Math.floor(Date.now() / 1000);
+                const timeLeft = endTime - now;
+                
+                const timerElement = document.getElementById(elementId);
+                if (!timerElement) {
+                    clearInterval(interval);
+                    countdownIntervals.delete(elementId);
+                    return;
+                }
+                
+                if (timeLeft <= 0) {
+                    timerElement.textContent = 'EXPIRED';
+                    timerElement.className = 'countdown-timer expired';
+                    clearInterval(interval);
+                    countdownIntervals.delete(elementId);
+                    
+                    // Call custom callback only - no automatic refresh
+                    if (onExpired) {
+                        onExpired();
+                    }
+                } else {
+                    const hours = Math.floor(timeLeft / 3600);
+                    const minutes = Math.floor((timeLeft % 3600) / 60);
+                    const seconds = timeLeft % 60;
+                    timerElement.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    timerElement.className = 'countdown-timer';
+                }
+            }, 1000);
+
+            countdownIntervals.set(elementId, interval);
+        }
+
+        // Load and display auctions
+        async function loadAuctions() {
+            if (!auctionContract || !currentAccount) return;
+
+            try {
+                const auctionCount = await auctionContract.auctionCounter();
+                
+                const ownedAuctions = [];
+                const availableAuctions = [];
+
+                for (let i = 0; i < Number(auctionCount); i++) {
+                    try {
+                        const auctionInfo = await auctionContract.getAuctionInfo(i);
+                        const [seller, nftContract, tokenId, endTime, ended, bidderCount, winner, winningBid] = auctionInfo;
+                        
+                        const auction = {
+                            id: i,
+                            seller,
+                            tokenId: Number(tokenId),
+                            endTime: Number(endTime),
+                            ended,
+                            bidderCount: Number(bidderCount),
+                            winner,
+                            winningBid: ethers.utils.formatEther(winningBid || 0)
+                        };
+
+                        const now = Math.floor(Date.now() / 1000);
+                        const isExpired = now >= auction.endTime;
+                        
+                        // Check if user has already bid in this auction
+                        const hasUserBidInAuction = await auctionContract.hasUserBid(i, currentAccount);
+                        auction.userHasBid = hasUserBidInAuction;
+                        auction.isExpired = isExpired;
+                        
+                        if (auction.seller.toLowerCase() === currentAccount.toLowerCase()) {
+                            ownedAuctions.push(auction);
+                        } else if (!auction.ended && !isExpired) {
+                            // Only show active, non-expired auctions in available auctions
+                            availableAuctions.push(auction);
+                        }
+
+                    } catch (error) {
+                        console.error(`Error loading auction ${i}:`, error);
+                    }
+                }
+
+                await displayOwnedAuctions(ownedAuctions);
+                displayAvailableAuctions(availableAuctions);
+                displayUserBids();
+
+            } catch (error) {
+                console.error('Error loading auctions:', error);
+            }
+        }
+
+        async function displayOwnedAuctions(auctions) {
+            const container = document.getElementById('ownedAuctions');
+            
+            if (auctions.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>No auctions created yet</p></div>';
+                return;
+            }
+
+            // Build auction cards with blockchain state checking
+            const auctionCards = [];
+            
+            for (const auction of auctions) {
+                const now = Math.floor(Date.now() / 1000);
+                const isExpired = now >= auction.endTime;
+                
+                // Check blockchain claim status
+                const claimStatus = await checkClaimStatus(auction.id);
+                const paymentClaimed = claimStatus.nftClaimed && auction.ended; // Assume payment claimed if NFT was claimed
+                
+                // Determine status: Active -> Expired -> Ended
+                let status = 'Active';
+                let statusClass = 'status-active';
+                if (auction.ended) {
+                    status = 'Ended';
+                    statusClass = 'status-ended';
+                } else if (isExpired) {
+                    status = 'Expired';
+                    statusClass = 'status-expired';
+                }
+                
+                const card = `
+                    <div class="auction-card">
+                        <h3>Auction #${auction.id}</h3>
+                        <div class="auction-info">
+                            <span>Token ID: ${auction.tokenId}</span>
+                            <span>Bidders: ${auction.bidderCount}</span>
+                            <span>Status: <span class="${statusClass}">${status}</span></span>
+                            ${!auction.ended && !isExpired ? `<span>Time Left: <span id="timer-${auction.id}" class="countdown-timer">Loading...</span></span>` : 
+                              auction.ended ? `<span>Ended: ${new Date(auction.endTime * 1000).toLocaleString()}</span>` :
+                              `<span>Expired: ${new Date(auction.endTime * 1000).toLocaleString()}</span>`}
+                            ${auction.ended && auction.winner !== '0x0000000000000000000000000000000000000000' ? 
+                                `<span>Winner: ${auction.winner.slice(0,6)}...${auction.winner.slice(-4)}</span>` : ''}
+                        </div>
+                        <div style="margin-top: 15px;">
+                            ${!auction.ended && isExpired ? 
+                                `<button class="btn" onclick="endAuction(${auction.id})">End Auction</button>` :
+                                auction.ended && auction.winner === '0x0000000000000000000000000000000000000000' ?
+                                    `<button class="btn" onclick="revealWinner(${auction.id})">Reveal Winner</button>` :
+                                    auction.ended && auction.winner !== '0x0000000000000000000000000000000000000000' ?
+                                        (paymentClaimed ? 
+                                            `<span class="status-ended">✅ Payment Claimed</span>` :
+                                            `<button class="btn" onclick="claimPayment(${auction.id})">Claim Payment</button>`) :
+                                        '<span>Auction Running</span>'
+                            }
+                        </div>
+                    </div>
+                `;
+                auctionCards.push(card);
+            }
+            
+            container.innerHTML = auctionCards.join('');
+
+            // Start countdown timers for active auctions
+            auctions.forEach(auction => {
+                if (!auction.ended) {
+                    startCountdown(auction.id, auction.endTime);
+                }
+            });
+        }
+
+        function displayAvailableAuctions(auctions) {
+            const container = document.getElementById('availableAuctions');
+            
+            if (auctions.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>No available auctions</p></div>';
+                return;
+            }
+
+            container.innerHTML = auctions.map(auction => {
+                const canBid = !auction.userHasBid && !auction.isExpired && !auction.ended;
+                const status = auction.ended ? 'Ended' : 
+                              auction.isExpired ? 'Expired' : 
+                              auction.userHasBid ? 'Already Bid' : 'Active';
+                
+                return `
+                <div class="auction-card">
+                    <h3>Auction #${auction.id}</h3>
+                    <div class="auction-info">
+                        <span>Token ID: ${auction.tokenId}</span>
+                        <span>Bidders: ${auction.bidderCount}</span>
+                        <span>Seller: ${auction.seller.slice(0,6)}...${auction.seller.slice(-4)}</span>
+                        <span>Status: ${status}</span>
+                        <span>Time Left: <span id="timer-${auction.id}" class="countdown-timer">Loading...</span></span>
+                    </div>
+                    ${canBid ? `
+                    <div class="bid-form">
+                        <input type="number" id="bidAmount${auction.id}" placeholder="Bid amount (ETH)" step="0.01">
+                        <button class="btn" onclick="placeBid(${auction.id})">Place Bid</button>
+                    </div>
+                    ` : ''}
+                </div>
+                `;
+            }).join('');
+
+            // Start countdown timers
+            auctions.forEach(auction => {
+                startCountdown(auction.id, auction.endTime);
+            });
+        }
+
+        // Fetch user bids from blockchain events and contract state
+        async function fetchUserBids() {
+            if (!auctionContract || !currentAccount) return [];
+
+            try {
+                // Get all BidPlaced events for current user
+                const filter = auctionContract.filters.BidPlaced(null, currentAccount);
+                const events = await auctionContract.queryFilter(filter);
+                
+                const userBids = [];
+                
+                for (const event of events) {
+                    const auctionId = Number(event.args.auctionId);
+                    
+                    try {
+                        // Get auction info
+                        const auctionInfo = await auctionContract.getAuctionInfo(auctionId);
+                        const [seller, nftContract, tokenId, endTime, ended, bidderCount, winner, winningBid] = auctionInfo;
+                        
+                        // Get user's actual bid amount from contract
+                        const bidAmountWei = await auctionContract.getUserBidAmount(auctionId, currentAccount);
+                        const bidAmount = ethers.utils.formatEther(bidAmountWei);
+                        
+                        const now = Math.floor(Date.now() / 1000);
+                        const isExpired = now >= Number(endTime);
+                        
+                        let status = "Active";
+                        
+                        // If auction is ended and winner is revealed
+                        if (ended && winner !== '0x0000000000000000000000000000000000000000') {
+                            if (winner.toLowerCase() === currentAccount.toLowerCase()) {
+                                // Check if NFT is still in contract (not claimed)
+                                const claimStatus = await checkClaimStatus(auctionId);
+                                status = claimStatus.nftClaimed ? "Won - NFT Claimed" : "Won - Claim NFT";
+                            } else {
+                                // Check hasRefunded mapping from contract
+                                try {
+                                    const hasRefunded = await auctionContract.hasUserRefunded(auctionId, currentAccount);
+                                    status = hasRefunded ? "Lost - Refund Claimed" : "Lost - Claim Refund";
+                                } catch (error) {
+                                    // Fallback: check if user has any successful refund transactions
+                                    const hasRefundTx = await checkRefundTransaction(auctionId, currentAccount);
+                                    status = hasRefundTx ? "Lost - Refund Claimed" : "Lost - Claim Refund";
+                                }
+                            }
+                        } else if (ended) {
+                            status = "Ended - Winner Not Revealed";
+                        } else if (isExpired) {
+                            status = "Expired";
+                        }
+                        
+                        userBids.push({
+                            auctionId,
+                            bidAmount,
+                            blockNumber: event.blockNumber,
+                            transactionHash: event.transactionHash,
+                            status,
+                            tokenId: Number(tokenId),
+                            endTime: Number(endTime),
+                            ended,
+                            winner: winner.toLowerCase(),
+                            isExpired
+                        });
+                        
+                    } catch (auctionError) {
+                        console.error(`Error getting auction ${auctionId} info:`, auctionError);
+                    }
+                }
+                
+                return userBids;
+                
+            } catch (error) {
+                console.error('Error fetching user bids:', error);
+                return [];
+            }
+        }
+
+        async function displayUserBids() {
+            const container = document.getElementById('userBids');
+            container.innerHTML = '<div class="empty-state"><p>Loading bids...</p></div>';
+            
+            const userBids = await fetchUserBids();
+            
+            if (userBids.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>No bids placed yet</p><p style="color: #666; margin-top: 10px;">Your bids will appear here after you place them</p></div>';
+                return;
+            }
+
+            // Build bid cards with blockchain state checking
+            const bidCards = [];
+            
+            for (const bid of userBids) {
+                // Check actual blockchain claim status
+                const claimStatus = await checkClaimStatus(bid.auctionId);
+                const nftClaimed = claimStatus.nftClaimed && bid.winner === currentAccount.toLowerCase();
+                
+                // Check if user has already claimed refund from contract
+                let refundClaimed = false;
+                if (bid.status.includes("Lost")) {
+                    try {
+                        refundClaimed = await auctionContract.hasUserRefunded(bid.auctionId, currentAccount);
+                    } catch (error) {
+                        // Fallback: use transaction check
+                        refundClaimed = await checkRefundTransaction(bid.auctionId, currentAccount);
+                    }
+                }
+                
+                const card = `
+                    <div class="auction-card">
+                        <h3>Auction #${bid.auctionId}</h3>
+                        <div class="auction-info">
+                            <span>Token ID: ${bid.tokenId}</span>
+                            <span>My Bid: ${bid.bidAmount} ETH</span>
+                            <span>Status: <span class="${bid.status.includes('Won') ? 'status-active' : bid.status.includes('Lost') ? 'status-ended' : bid.status === 'Expired' ? 'status-expired' : 'status-active'}">${bid.status}</span></span>
+                            ${!bid.ended && !bid.isExpired ? `<span>Time Left: <span id="bid-timer-${bid.auctionId}" class="countdown-timer">Loading...</span></span>` :
+                              bid.ended ? `<span>Ended: ${new Date(bid.endTime * 1000).toLocaleString()}</span>` :
+                              `<span>Expired: ${new Date(bid.endTime * 1000).toLocaleString()}</span>`}
+                            <span>Tx Hash: <a href="https://sepolia.etherscan.io/tx/${bid.transactionHash}" target="_blank" style="color: #00ff88;">${bid.transactionHash.slice(0,10)}...</a></span>
+                        </div>
+                        <div style="margin-top: 15px;">
+                            ${bid.status === "Won - Claim NFT" && !nftClaimed ?
+                                `<button class="btn" onclick="claimNFT(${bid.auctionId})">Claim NFT</button>` :
+                                bid.status === "Lost - Claim Refund" && !refundClaimed ?
+                                    `<button class="btn" onclick="claimRefund(${bid.auctionId})">Claim Refund</button>` :
+                                    bid.status.includes('Claimed') || nftClaimed || refundClaimed ?
+                                        `<span class="status-ended">✅ Claimed</span>` :
+                                        `<span class="status-active">⏳ ${bid.status}</span>`
+                            }
+                        </div>
+                    </div>
+                `;
+                bidCards.push(card);
+            }
+
+            container.innerHTML = bidCards.join('');
+            
+            // Start countdown timers for active bid auctions
+            userBids.forEach(bid => {
+                if (!bid.ended && !bid.isExpired) {
+                    startCountdown(`bid-timer-${bid.auctionId}`, bid.endTime);
+                }
+            });
+        }
+
+        // Initialize app
+        window.addEventListener('load', () => {
+            document.getElementById('connectBtn').onclick = connectWallet;
+            document.getElementById('mintBtn').onclick = mintNFT;
+            document.getElementById('approveBtn').onclick = approveNFT;
+            document.getElementById('createAuctionForm').onsubmit = createAuction;
+            
+            console.log('ZAMA FHE Auction App initialized');
+            // Initialize blockchain-based bid tracking
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+{
+  "network": "sepolia",
+  "chainId": 11155111,
+  "auction": "0x81C050Eb869bf91C7004c6e8d0372D9cAA727109",
+  "nft": "0x006500bA61450DACb2EEd61E431c8FAc5625e5FE"
+}
